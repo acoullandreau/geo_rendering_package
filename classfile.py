@@ -14,15 +14,14 @@ class Map:
         self.max_bound = -99999999
         self.min_bound = 99999999
         self.projection = {}
-        self.sf_shape_dict = self.shapefile.shape_dict
-        self.shape_dict = {}
+        self.shape_dict = self.shapefile.shape_dict
         self.map_file = None
 
     def find_max_coords(self):
 
         all_max_bound = []
         all_min_bound = []
-        shape_dict = self.sf_shape_dict
+        shape_dict = self.shape_dict
 
         for zone in shape_dict:
             zone_shape = shape_dict[zone]
@@ -83,9 +82,7 @@ class Map:
             x = (x + x_min) / conversion
             y = (y + y_min) / conversion
 
-        return x, y
-
-    def apply_project_to_shape_dict(self):
+    def apply_translation(self, coords):
 
         proj = self.projection
         axis_to_center = proj['axis_to_center']
@@ -94,54 +91,31 @@ class Map:
         map_x_max = proj['map_max_bound'][0]
         map_y_max = proj['map_max_bound'][1]
         map_max_converted = (self.apply_projection(map_x_max, map_y_max, proj))
+        self.max_bound = map_max_converted
         map_x_min = proj['map_min_bound'][0]
         map_y_min = proj['map_min_bound'][1]
         map_min_converted = (self.apply_projection(map_x_min, map_y_min, proj))
+        self.min_bound = map_min_converted
 
         if axis_to_center == 'x':
-            map_x_max_conv = map_max_converted[0]
-            map_x_min_conv = map_min_converted[0]
+            map_x_max_conv = self.max_bound[0]
+            map_x_min_conv = self.min_bound[0]
             center_translation = (image_x_max - (map_x_max_conv - map_x_min_conv))/2
         else:
-            map_y_max_conv = map_max_converted[1]
-            map_y_min_conv = map_min_converted[1]
+            map_y_max_conv = self.max_bound[1]
+            map_y_min_conv = self.min_bound[1]
             center_translation = (image_y_max - (map_y_max_conv - map_y_min_conv))/2
 
-        for zone_id in self.shape_dict:
-            curr_shape = self.shape_dict[zone_id]
+        # we center the map on the axis that was not used to scale the image
+        if axis_to_center == 'x':
+            coords[0] = coords[0] + center_translation
+        else:
+            coords[1] = coords[1] + center_translation
 
-            points = curr_shape['points']
-            x_center = curr_shape['center'][0]
-            y_center = curr_shape['center'][1]
-            max_bound = curr_shape['max_bound']
-            min_bound = curr_shape['min_bound']
+        # we mirror the image to match the axis alignment
+        coords[1] = image_y_max - coords[1]
 
-            converted_points = []
-            for point in points:
-                # we convert the coordinates to the new coordinate system
-                conv_point = [0, 0]
-                conv_point[0], conv_point[1] = self.apply_projection(point[0], point[1], proj)
-                # we center the map on the axis that was not used to scale the image
-                if axis_to_center == 'x':
-                    conv_point[0] = conv_point[0] + center_translation
-                else:
-                    conv_point[1] = conv_point[1] + center_translation
-
-                # we mirror the image to match the axis alignment
-                conv_point[1] = image_y_max - conv_point[1]
-                converted_points.append(conv_point)
-
-            # we convert the center and the max and min boundaries
-            x_center, y_center = Utils.calculate_centroid(converted_points)
-            max_bound = (self.apply_projection(max_bound[0], max_bound[1], proj))
-            min_bound = (self.apply_projection(min_bound[0], min_bound[1], proj))
-
-            # We edit the dictionary with the new coordinates
-            self.shape_dict[zone_id] = {}
-            self.shape_dict[zone_id]['points'] = converted_points
-            self.shape_dict[zone_id]['center'] = (x_center, y_center)
-            self.shape_dict[zone_id]['max_bound'] = max_bound
-            self.shape_dict[zone_id]['min_bound'] = min_bound
+        return coords
 
     def draw_base_map(self):
 
