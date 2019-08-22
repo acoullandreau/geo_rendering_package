@@ -183,35 +183,62 @@ class ShapeFile:
         df = df.assign(coords=shps)
         self.df_sf = df
 
-    def process_shape_boundaries(self):
-
-        shape_dict = {}
-        index_list = self.df_sf.index.tolist()
-
-        for zone_id in index_list:
-            # for each zone id available in the shapefile
-            if zone_id not in shape_dict:
-                # we only process the coordinates if it is not yet in the dict
-                shape_zone = self.shapefile.shape(zone_id)
-
-                points = [(i[0], i[1]) for i in shape_zone.points]
-
-                x_center, y_center = Utils.calculate_centroid(points)
-                max_bound, min_bound = Utils.calculate_boundaries(points)
-
-                # we add to the dict, for the zone id, the shape boundaries
-                # and the coordinates of the center of the shape
-                # and the zone extreme boundaries
-                shape_dict[zone_id] = {}
-                shape_dict[zone_id]['points'] = points
-                shape_dict[zone_id]['center'] = (x_center, y_center)
-                shape_dict[zone_id]['max_bound'] = max_bound
-                shape_dict[zone_id]['min_bound'] = min_bound
-
-        self.shape_dict = shape_dict
-
 
 class ContextualText:
 
-    def __init__(self, content):
+    def __init__(self, content, position, color):
         self.text_content = content
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.font_style = cv2.LINE_AA
+        self.position = position
+        self.color = color
+        self.text_size = 1
+        self.thickness = 1
+
+    def display_text(self, map_to_edit):
+        text = self.text_content
+        pos = self.position
+        col = self.color
+        font = self.font
+        size = self.text_size
+        thick = self.thickness
+        style = self.font_style
+
+        cv2.putText(map_to_edit, text, pos, font, size, col, thick, style)
+
+
+class PointOnMap:
+
+    def __init__(self, coordinates, weight, color):
+        self.x_coord = coordinates[0]
+        self.y_coord = coordinates[1]
+        self.weight = weight
+        self.color = color
+
+    def render_point_on_map(self, base_map):
+        x = self.x_coord
+        y = self.y_coord
+        cv2.circle(base_map, (x, y), self.weight, self.color, -1)
+
+
+class ShapeOnMap:
+
+    def __init__(self, shapefile, shape_id):
+        self.shapefile = shapefile
+        self.shape_id = shape_id
+        self.points = []
+        self.center = ()
+        self.max_bound = ()
+        self.min_bound = ()
+
+    def get_shape_coords(self):
+
+        shape_zone = self.shapefile.shape(self.shape_id)
+        points = [(i[0], i[1]) for i in shape_zone.points]
+        x_center, y_center = Utils.calculate_centroid(points)
+        max_bound, min_bound = Utils.calculate_boundaries(points)
+
+        self.points = points
+        self.center = (x_center, y_center)
+        self.max_bound = max_bound
+        self.min_bound = min_bound
