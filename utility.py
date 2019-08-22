@@ -38,3 +38,13 @@ class Utils:
         min_bound = (x_min, y_min)
 
         return max_bound, min_bound
+
+    @staticmethod
+    def convert_id(idx, inverse=False):
+
+        if inverse is False:
+            idx = idx - 1
+        else:
+            idx = idx + 1
+
+        return idx
