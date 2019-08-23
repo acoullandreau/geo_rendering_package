@@ -8,14 +8,15 @@ from utility import Utils
 
 class Map:
 
-    def __init__(self, shapefile, image_size):
+    def __init__(self, shapefile, image_size, background_color=[0, 0, 0]):
         self.shapefile = shapefile
         self.image_size = image_size
-        self.max_bound = self.find_max_coords(self)[0]
-        self.min_bound = self.find_max_coords(self)[1]
+        self.max_bound = self.find_max_coords()[0]
+        self.min_bound = self.find_max_coords()[1]
         self.projection = {}
         self.shape_dict = self.shapefile.shape_dict
         self.map_file = None
+        self.background_color = background_color  # Default black background
 
     def find_max_coords(self):
 
@@ -42,14 +43,15 @@ class Map:
         height = self.image_size[1]
         # ex: size of the image 1080 height, 1920 width, 3 channels of colour
         base_map = np.zeros((height, width, 3), np.uint8)
-        base_map[:, :] = [0, 0, 0]  # Sets the color to white
+        base_map[:, :] = self.background_color
 
         # we draw each shape of the dictionary on the blank image
-        for item in self.shape_dict:
-            shape = self.shape_dict[item]
-            points = shape['points']
+        for shape_id in self.shape_dict:
+            shape = self.shape_dict[shape_id]
+            points = shape.points
             pts = np.array(points, np.int32)
-            cv2.polylines(base_map, [pts], True, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.polylines(base_map, [pts], True, shape.color_line,
+                          shape.line_thick, cv2.LINE_AA)
 
         self.map_file = base_map
 
@@ -150,13 +152,13 @@ class ShapeFile:
 
     def __init__(self, file_path):
         self.path = file_path
-        self.shapefile = None
-        self.df_sf = None
-        self.shape_dict = None
+        self.shapefile = self.sf_reader(self.path)
+        self.df_sf = self.shp_to_df()
+        self.shape_dict = {}
 
     def sf_reader(self, path):
         shapefile = shp.Reader(self.path)
-        self.shapefile = shapefile
+        return shapefile
 
     def shp_to_df(self):
         sf = self.shapefile
@@ -165,7 +167,28 @@ class ShapeFile:
         shps = [s.points for s in sf.shapes()]
         df = pd.DataFrame(columns=fields, data=records)
         df = df.assign(coords=shps)
-        self.df_sf = df
+
+    def filter_shape_to_render(self, cond_stat, attr):
+        # cond_stat in the form of a string or an array
+        # attr in the form of a str, a column name of df
+        try:
+            if type(cond_stat) == str:
+                filtered_df = self.df_sf[self.df_sf[attr] == cond_stat]
+            elif type(cond_stat) == list:
+                filtered_df = self.df_sf[self.df_sf[attr].isin(cond_stat)]
+
+            return filtered_df
+        except:
+            print("Error parsing condition statement or attribute")
+            print("Condition statement must be str or arr of values in the shapefile_dataframe")
+            print("Attribute must be a column name of the shapefile_dataframe")
+            print("See ShapeFile().df_sf for more details")
+
+    def build_shape_dict(self, ref_df):
+        index_list = ref_df.index.tolist()
+        for shape_id in index_list:
+            shape = ShapeOnMap(self.shapefile, shape_id)
+            self.shape_dict[shape_id] = shape
 
 
 class ContextualText:
@@ -210,19 +233,20 @@ class ShapeOnMap:
     def __init__(self, shapefile, shape_id):
         self.shapefile = shapefile
         self.shape_id = shape_id
-        self.points = []
-        self.center = ()
-        self.max_bound = ()
-        self.min_bound = ()
+        self.points = self.get_shape_coords()[0]
+        self.center = self.get_shape_coords()[1]
+        self.max_bound = self.get_shape_coords()[2]
+        self.min_bound = self.get_shape_coords()[3]
+        self.color_line = (255, 255, 255)  # Default white line
+        self.line_thick = 1
+        self.color_fill = (0, 0, 0)  # Default black fill
 
     def get_shape_coords(self):
 
         shape_zone = self.shapefile.shape(self.shape_id)
         points = [(i[0], i[1]) for i in shape_zone.points]
         x_center, y_center = Utils.calculate_centroid(points)
+        center = (x_center, y_center)
         max_bound, min_bound = Utils.calculate_boundaries(points)
 
-        self.points = points
-        self.center = (x_center, y_center)
-        self.max_bound = max_bound
-        self.min_bound = min_bound
+        return (points, center, max_bound, min_bound)
