@@ -11,8 +11,8 @@ class Map:
     def __init__(self, shapefile, image_size):
         self.shapefile = shapefile
         self.image_size = image_size
-        self.max_bound = -99999999
-        self.min_bound = 99999999
+        self.max_bound = self.find_max_coords(self)[0]
+        self.min_bound = self.find_max_coords(self)[1]
         self.projection = {}
         self.shape_dict = self.shapefile.shape_dict
         self.map_file = None
@@ -33,91 +33,9 @@ class Map:
         map_max_bound, unused_max = Utils.calculate_boundaries(all_max_bound)
         unused_min, map_min_bound = Utils.calculate_boundaries(all_min_bound)
 
-        self.max_bound = map_max_bound
-        self.min_bound = map_min_bound
+        return (map_max_bound, map_min_bound)
 
-    def define_projection(self):
-
-        # We get the max 'coordinates' for both the target image and
-        # the shape we want to draw
-        image_x_max = self.image_size[0]
-        image_y_max = self.image_size[1]
-        map_x_max = self.max_bound[0]
-        map_y_max = self.max_bound[1]
-        map_x_min = self.min_bound[0]
-        map_y_min = self.min_bound[1]
-
-        # we check which size is bigger to know based on which axis we want
-        # to scale our shape to
-        # we do the comparison using the aspect ratio expectations (dividing
-        # each axis by the size of the target axis in the new scale)
-        ratio_x = (map_x_max - map_x_min)/image_x_max
-        ratio_y = (map_y_max - map_y_min)/image_y_max
-        if ratio_x > ratio_y:
-            conversion = image_x_max / (map_x_max - map_x_min)
-            axis_to_center = 'y'  # we store the axis we will want to center on
-            # based on which axis we perform the scaling from
-        else:
-            conversion = image_y_max / (map_y_max - map_y_min)
-            axis_to_center = 'x'
-
-        self.projection['image_size'] = self.image_size
-        self.projection['map_max_bound'] = self.max_bound
-        self.projection['map_min_bound'] = self.min_bound
-        self.projection['conversion'] = conversion
-        self.projection['axis_to_center'] = axis_to_center
-
-    def apply_projection(self, x, y, inverse=False):
-
-        x_min = self.projection['map_min_bound'][0]
-        y_min = self.projection['map_min_bound'][1]
-        conversion = self.projection['conversion']
-
-        if inverse is False:
-            # to be able to center the image, we first translate the
-            # coordinates to the origin
-            x = (x - x_min) * conversion
-            y = (y - y_min) * conversion
-        else:
-            x = (x + x_min) / conversion
-            y = (y + y_min) / conversion
-
-    def apply_translation(self, coords):
-
-        proj = self.projection
-        axis_to_center = proj['axis_to_center']
-        image_x_max = proj['image_size'][0]
-        image_y_max = proj['image_size'][1]
-        map_x_max = proj['map_max_bound'][0]
-        map_y_max = proj['map_max_bound'][1]
-        map_max_converted = (self.apply_projection(map_x_max, map_y_max, proj))
-        self.max_bound = map_max_converted
-        map_x_min = proj['map_min_bound'][0]
-        map_y_min = proj['map_min_bound'][1]
-        map_min_converted = (self.apply_projection(map_x_min, map_y_min, proj))
-        self.min_bound = map_min_converted
-
-        if axis_to_center == 'x':
-            map_x_max_conv = self.max_bound[0]
-            map_x_min_conv = self.min_bound[0]
-            center_translation = (image_x_max - (map_x_max_conv - map_x_min_conv))/2
-        else:
-            map_y_max_conv = self.max_bound[1]
-            map_y_min_conv = self.min_bound[1]
-            center_translation = (image_y_max - (map_y_max_conv - map_y_min_conv))/2
-
-        # we center the map on the axis that was not used to scale the image
-        if axis_to_center == 'x':
-            coords[0] = coords[0] + center_translation
-        else:
-            coords[1] = coords[1] + center_translation
-
-        # we mirror the image to match the axis alignment
-        coords[1] = image_y_max - coords[1]
-
-        return coords
-
-    def draw_base_map(self):
+    def render_map(self):
 
         # first we create a blank image, on which we will draw the base map
         width = self.image_size[0]
@@ -134,6 +52,98 @@ class Map:
             cv2.polylines(base_map, [pts], True, (255, 255, 255), 1, cv2.LINE_AA)
 
         self.map_file = base_map
+
+
+class Projection:
+
+    def __init__(self, map_to_draw, margin=(0, 0, 0, 0)):
+        self.image_size = self.map_to_draw.image_size
+        self.map_max_bound = self.map_to_draw.max_bound
+        self.map_min_bound = self.map_to_draw.min_bound
+        self.conversion = 0
+        self.axis_to_center = None
+        self.margin = margin  # (top, right, bottom, left) in pixels
+
+    def define_projection(self):
+
+        # We get the max 'coordinates' for both the target image and
+        # the shape we want to draw
+        image_x_max = self.image_size[0] - self.margin[1]
+        image_y_max = self.image_size[1] - self.margin[2]
+        image_x_min = self.image_size[0] - self.margin[3]
+        image_y_min = self.image_size[1] - self.margin[0]
+        map_x_max = self.map_max_bound[0]
+        map_y_max = self.map_max_bound[1]
+        map_x_min = self.map_min_bound[0]
+        map_y_min = self.map_min_bound[1]
+
+        # we check which size is bigger to know based on which axis we want
+        # to scale our shape to
+        # we do the comparison using the aspect ratio expectations (dividing
+        # each axis by the size of the target axis in the new scale)
+        ratio_x = (map_x_max - map_x_min)/(image_x_max - image_x_min)
+        ratio_y = (map_y_max - map_y_min)/(image_y_max - image_y_min)
+        if ratio_x > ratio_y:
+            conversion = 1 / ratio_x
+            axis_to_center = 'y'  # we store the axis we will want to center on
+            # based on which axis we perform the scaling from
+        else:
+            conversion = 1 / ratio_y
+            axis_to_center = 'x'
+
+        self.conversion = conversion
+        self.axis_to_center = axis_to_center
+
+    def apply_projection(self, x, y, inverse=False):
+
+        x_min = self.map_min_bound[0]
+        y_min = self.map_min_bound[1]
+
+        if inverse is False:
+            # to be able to center the image, we first translate the
+            # coordinates to the origin
+            x = (x - x_min) * self.conversion
+            y = (y - y_min) * self.conversion
+        else:
+            x = (x + x_min) / self.conversion
+            y = (y + y_min) / self.conversion
+
+    def apply_translation(self, coords):
+
+        proj = self.projection
+        axis_to_center = self.axis_to_center
+        image_x_max = self.image_size[0] - self.margin[1]
+        image_y_max = self.image_size[1] - self.margin[2]
+        image_x_min = self.image_size[0] - self.margin[3]
+        image_y_min = self.image_size[1] - self.margin[0]
+        map_x_max = self.map_max_bound[0]
+        map_y_max = self.map_max_bound[1]
+        map_max_converted = (self.apply_projection(map_x_max, map_y_max, proj))
+        map_x_min = self.map_min_bound[0]
+        map_y_min = self.map_min_bound[1]
+        map_min_converted = (self.apply_projection(map_x_min, map_y_min, proj))
+
+        if axis_to_center == 'x':
+            map_x_max_conv = map_max_converted[0]
+            map_x_min_conv = map_min_converted[0]
+            center_translation = ((image_x_max - image_x_min)
+                                  - (map_x_max_conv - map_x_min_conv))/2
+        else:
+            map_y_max_conv = map_max_converted[1]
+            map_y_min_conv = map_min_converted[1]
+            center_translation = ((image_y_max - image_y_min)
+                                  - (map_y_max_conv - map_y_min_conv))/2
+
+        # we center the map on the axis that was not used to scale the image
+        if axis_to_center == 'x':
+            coords[0] = coords[0] + center_translation
+        else:
+            coords[1] = coords[1] + center_translation
+
+        # we mirror the image to match the axis alignment
+        coords[1] = image_y_max - coords[1]
+
+        return coords
 
 
 class ShapeFile:
