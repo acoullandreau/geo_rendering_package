@@ -33,7 +33,9 @@ class Map:
 
     def __init__(self, shapefile, image_size, background_color=[0, 0, 0]):
         self.shapefile = shapefile
-        self.shape_dict = shapefile.shape_dict
+        self.shape_dict = self.build_shape_dict(self.shapefile.df_sf)
+        # different from shape_dict if filter on the base map but not on the data to plot
+        self.shape_dict_filt = self.build_shape_dict(self.shapefile.df_sf)
         self.image_size = image_size
         self.max_bound = self.find_max_coords()[0]
         self.min_bound = self.find_max_coords()[1]
@@ -41,12 +43,20 @@ class Map:
         self.map_file = None
         self.background_color = background_color  # Default black background
 
+    def build_shape_dict(self, ref_df):
+        index_list = ref_df.index.tolist()
+        shape_dict = {}
+        for shape_id in index_list:
+            shape = ShapeOnMap(self.shapefile.shapefile, shape_id)
+            shape_dict[shape_id] = shape
+
+        return shape_dict
+
     def find_max_coords(self):
 
         all_max_bound = []
         all_min_bound = []
         shape_dict = self.shape_dict
-
         for zone_id in shape_dict:
             zone_shape = shape_dict[zone_id]
             max_bound_zone = zone_shape.max_bound
@@ -69,8 +79,8 @@ class Map:
         base_map[:, :] = self.background_color
 
         # we draw each shape of the dictionary on the blank image
-        for shape_id in self.shape_dict:
-            shape = self.shape_dict[shape_id]
+        for shape_id in self.shape_dict_filt:
+            shape = self.shape_dict_filt[shape_id]
             points = shape.points
             pts = np.array(points, np.int32)
             cv2.polylines(base_map, [pts], True, shape.color_line,
@@ -82,20 +92,40 @@ class Map:
 class PointOnMap:
 
     def __init__(self, coordinates, weight, color):
-        self.x_coord = coordinates[0]
-        self.y_coord = coordinates[1]
+        self.x_coord_or = coordinates[0]
+        self.y_coord_or = coordinates[1]
+        self.x_coord_curr = coordinates[0]
+        self.y_coord_curr = coordinates[1]
         self.weight = weight
         self.color = color
 
     def render_point_on_map(self, base_map):
-        x = self.x_coord
-        y = self.y_coord
+        x = int(self.x_coord_curr)
+        y = int(self.y_coord_curr)
         cv2.circle(base_map, (x, y), self.weight, self.color, -1)
+
+    def interpolate_next_position(self, target_coords, tot_frames, curr_frame):
+        # as to perform the arithmetic operations, we convert everything to
+        # float for more precision
+        x_origin = float(self.x_coord_or)
+        y_origin = float(self.y_coord_or)
+        x_destination = float(target_coords[0])
+        y_destination = float(target_coords[1])
+        tot_frames = float(tot_frames - 1)
+        curr_frame = float(curr_frame)
+
+        delta_x = (x_destination - x_origin)/tot_frames
+        delta_y = (y_destination - y_origin)/tot_frames
+
+        # the rendering with OpenCV demands integers values for the positioning
+        # so we convert x and y to int
+        self.x_coord_curr = int(x_origin+delta_x*curr_frame)
+        self.y_coord_curr = int(y_origin+delta_y*curr_frame)
 
 
 class Projection:
 
-    def __init__(self, map_to_scale, margin=(0, 0, 0, 0)):
+    def __init__(self, map_to_scale, margin=[0, 0, 0, 0]):
         self.image_size = map_to_scale.image_size
         self.map_max_bound = map_to_scale.max_bound
         self.map_min_bound = map_to_scale.min_bound
@@ -194,7 +224,7 @@ class ShapeFile:
         self.path = file_path
         self.shapefile = self.sf_reader(self.path)
         self.df_sf = self.shp_to_df()
-        self.shape_dict = self.build_shape_dict(self.df_sf)
+        self.shape_dict_sf = self.build_shape_dict(self.df_sf)
 
     def sf_reader(self, path):
         shapefile = shp.Reader(self.path)
@@ -227,10 +257,12 @@ class ShapeFile:
 
     def build_shape_dict(self, ref_df):
         index_list = ref_df.index.tolist()
-        self.shape_dict = {}
+        shape_dict = {}
         for shape_id in index_list:
             shape = ShapeOnMap(self.shapefile, shape_id)
-            self.shape_dict[shape_id] = shape
+            shape_dict[shape_id] = shape
+
+        return shape_dict
 
 
 class ShapeOnMap:
