@@ -151,8 +151,102 @@ class TestPointClass(unittest.TestCase):
         self.point_instance = None
 
 
-class TestProjectionClass(unittest.TestCase):
+class TestProjectionClassWithMargin(unittest.TestCase):
     pass
+    def setUp(self):
+        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        self.sf = classfile.ShapeFile(shp_path)
+        self.base_map = classfile.Map(self.sf, [1920, 1080])
+        self.projection = classfile.Projection(self.base_map, [10, 20, 30, 40])
+
+    def test_init_projection(self):
+        """
+        Test the proper instanciation of the Projection Class with margins
+        """
+        self.assertEqual(self.projection.image_size, [1920, 1080])
+        self.assertEqual(self.projection.map_max_bound, (1067382.508405164, 272844.2940054685))
+        self.assertEqual(self.projection.map_min_bound, (913175.109008804, 120121.88125434518))
+        self.assertEqual(self.projection.margin, [10, 20, 30, 40])
+        self.assertEqual(self.projection.conversion, 0.006809740504131412)
+        self.assertEqual(self.projection.axis_to_center, 'x')
+
+    def test_define_projection(self):
+        conversion, axis_to_center = self.projection.define_projection()
+        self.assertEqual(conversion, 0.006809740504131412)
+        self.assertEqual(axis_to_center, 'x')
+
+    def test_apply_projection(self):
+        coords = (1, 1)
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], 0.006809740504131412)
+        self.assertEqual(new_coords[1], 0.006809740504131412)
+
+    def test_apply_projection_inverse(self):
+        coords = (0.006809740504131412, 0.006809740504131412)
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], 1)
+        self.assertEqual(new_coords[1], 1)
+
+    def tearDown(self):
+        self.sf = None
+        self.base_map = None
+        self.projection = None
+
+
+class TestProjectionClassWithoutMargin(unittest.TestCase):
+
+    def setUp(self):
+        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        self.sf = classfile.ShapeFile(shp_path)
+        self.base_map = classfile.Map(self.sf, [1920, 1080])
+        self.projection = classfile.Projection(self.base_map)
+
+    def test_init_projection(self):
+        """
+        Test the proper instanciation of the Projection Class without margins
+        """
+        self.assertEqual(self.projection.image_size, [1920, 1080])
+        self.assertEqual(self.projection.map_max_bound, (1067382.508405164, 272844.2940054685))
+        self.assertEqual(self.projection.map_min_bound, (913175.109008804, 120121.88125434518))
+        self.assertEqual(self.projection.margin, [0, 0, 0, 0])
+        self.assertEqual(self.projection.conversion, 0.007071653600444159)
+        self.assertEqual(self.projection.axis_to_center, 'x')
+
+    def test_define_projection(self):
+        conversion, axis_to_center = self.projection.define_projection()
+        self.assertEqual(conversion, 0.007071653600444159)
+        self.assertEqual(axis_to_center, 'x')
+
+    def test_apply_projection(self):
+        coords = [1, 1]
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], -6218.478717441366)
+        self.assertEqual(new_coords[1], -817.992030469674)
+
+    def test_apply_projection_inverse(self):
+        coords = [-6218.478717441366, -817.992030469674]
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], 1)
+        self.assertEqual(new_coords[1], 1)
+
+    def test_apply_translation_x_center(self):
+        self.projection.axis_to_center = 'x'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 405.9438131469189)
+        self.assertEqual(new_coords[1], 1049)
+
+    def test_apply_translation_y_center(self):
+        self.projection.axis_to_center = 'y'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 1)
+        self.assertEqual(new_coords[1], 1049)
+
+    def tearDown(self):
+        self.sf = None
+        self.base_map = None
+        self.projection = None
 
 
 class TestShapeClass(unittest.TestCase):
@@ -225,7 +319,7 @@ class TestShapefileClass(unittest.TestCase):
         # Test the shapefile Reader object
         self.assertEqual(len(self.sf.shapefile), 263)
         self.assertTrue(isinstance(self.sf.shapefile, shp.Reader))
-        self.assertEqual(self.sf.shapefile.shapeTypeName, 'POINT')
+        self.assertEqual(self.sf.shapefile.shapeTypeName, 'POLYGON')
         # Test the shapefile dataframe object
         self.assertEqual(self.sf.df_sf.shape, (263, 7))
         self.assertEqual(self.sf.df_sf.columns.values.tolist(), ['OBJECTID', 'Shape_Leng', 'Shape_Area', 'zone', 'LocationID', 'borough', 'coords'])
@@ -240,14 +334,14 @@ class TestShapefileClass(unittest.TestCase):
         # Test the shapefile Reader object
         self.assertEqual(len(self.sf.shapefile), 263)
         self.assertTrue(isinstance(self.sf.shapefile, shp.Reader))
-        self.assertEqual(self.sf.shapefile.shapeTypeName, 'POINT')
+        self.assertEqual(self.sf.shapefile.shapeTypeName, 'POLYGON')
 
     def test_shp_to_df(self):
         """
         Test the proper construction of a dataframe from a shapefile
         """
         df_sf = self.sf.shp_to_df()
-        self.assertEqual(df_sf.shape, (283, 5))
+        self.assertEqual(df_sf.shape, (263, 7))
         self.assertEqual(df_sf.columns.values.tolist(), ['OBJECTID', 'Shape_Leng', 'Shape_Area', 'zone', 'LocationID', 'borough', 'coords'])
 
     def test_build_shape_dict(self):
@@ -256,7 +350,7 @@ class TestShapefileClass(unittest.TestCase):
         """
         df_sf = self.sf.shp_to_df()
         shape_dict_sf = self.sf.build_shape_dict(df_sf)
-        self.assertEqual(len(shape_dict_sf), 283)
+        self.assertEqual(len(shape_dict_sf), 263)
         self.assertTrue(isinstance(shape_dict_sf[0], classfile.ShapeOnMap))
 
     def test_filter_shape_to_render_str(self):
@@ -267,7 +361,7 @@ class TestShapefileClass(unittest.TestCase):
         attr = 'zone'
         df_filtered = self.sf.filter_shape_to_render(cond_stat, attr)
         self.assertEqual(df_filtered.shape, (1, 7))
-        self.assertEqual(df_filtered.iloc[0, [0, 1, 2, 3, 4]].tolist(), [1, 0.116357, 0.000782307, 'Newark Airport', 1, 'EWR'])
+        self.assertEqual(df_filtered.iloc[0, :-1].tolist(), [1, 0.116357453189, 0.0007823067885, 'Newark Airport', 1, 'EWR'])
 
     def test_filter_shape_to_render_arr(self):
         """
@@ -277,8 +371,8 @@ class TestShapefileClass(unittest.TestCase):
         attr = 'zone'
         df_filtered = self.sf.filter_shape_to_render(cond_stat, attr)
         self.assertEqual(df_filtered.shape, (2, 7))
-        self.assertEqual(df_filtered.iloc[0, [0, 1, 2, 3, 4]].tolist(), [1, 0.116357, 0.000782307, 'Newark Airport', 1, 'EWR'])
-        self.assertEqual(df_filtered.iloc[1, [0, 1, 2, 3, 4]].tolist(), [2, 0.43347, 0.00486634, 'Jamaica Bay', 2, 'Queens'])
+        self.assertEqual(df_filtered.iloc[0, :-1].tolist(), [1, 0.116357453189, 0.0007823067885, 'Newark Airport', 1, 'EWR'])
+        self.assertEqual(df_filtered.iloc[1, :-1].tolist(), [2, 0.43346966679, 0.00486634037837, 'Jamaica Bay', 2, 'Queens'])
 
     def test_filter_shape_to_render_error_cond(self):
         """
