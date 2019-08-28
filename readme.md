@@ -200,6 +200,12 @@ There is a total of 37 tests available, that should cover most of the classes an
 | classfile.py | 214   |  10  |  95%  | 20-28, 155-156  |
 | utility.py   | 33    |   0  |  100% |                 |
 
+Note: tests can be executed using the following command from the geo_rendering main directory (where the setup.py file is stored!)
+
+```
+python setup.py test
+```
+
 
 Further work and improvements
 -----------------------------
