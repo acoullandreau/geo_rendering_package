@@ -3,3 +3,4 @@ nyc*
 shapefile
 .idea
 *pycache*
+*.egg*
