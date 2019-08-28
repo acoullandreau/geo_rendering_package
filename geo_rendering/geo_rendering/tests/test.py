@@ -4,13 +4,13 @@ import shapefile as shp
 import unittest
 from unittest.mock import MagicMock
 
-from contextual_text_class import ContextualText
-from map_class import Map
-from point_class import PointOnMap
-from projection_class import Projection
-from shape_class import ShapeOnMap
-from shapefile_class import ShapeFile
-from utility import Utils
+from ..contextual_text_class import ContextualText
+from ..map_class import Map
+from ..point_class import PointOnMap
+from ..projection_class import Projection
+from ..shape_class import ShapeOnMap
+from ..shapefile_class import ShapeFile
+from ..utility import Utils
 
 
 class TestUtils(unittest.TestCase):
@@ -97,7 +97,7 @@ class TestMapClass(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
         self.base_map = Map(self.sf, [1920, 1080])
         self.cv2_original = cv2.polylines
@@ -216,7 +216,7 @@ class TestProjectionClassWithMargin(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
         self.base_map = Map(self.sf, [1920, 1080])
         self.projection = Projection(self.base_map, [10, 20, 30, 40])
@@ -291,7 +291,7 @@ class TestProjectionClassWithoutMargin(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
         self.base_map = Map(self.sf, [1920, 1080])
         self.projection = Projection(self.base_map)
@@ -366,7 +366,7 @@ class TestShapeClass(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
         self.shape = ShapeOnMap(self.sf.shapefile, 0)
         self.cv2_original = cv2.fillPoly
@@ -435,7 +435,7 @@ class TestShapefileClass(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        shp_path = "./nyc_taxi_zones/taxi_zones.shp"
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
 
     def test_init_sf(self):
