@@ -47,7 +47,35 @@ class TestUtils(unittest.TestCase):
 
 
 class TestTextClass(unittest.TestCase):
-    pass
+    def setUp(self):
+        self.text = classfile.ContextualText('This is a test', (50, 50), (255, 255, 255))
+
+
+    def test_init_text(self):
+        self.assertEqual(self.text.text_content, 'This is a test')
+        self.assertEqual(self.text.position, (50, 50))
+        self.assertEqual(self.text.color, (255, 255, 255))
+        self.assertEqual(self.text.font, cv2.FONT_HERSHEY_SIMPLEX)
+        self.assertEqual(self.text.font_style, cv2.LINE_AA)
+        self.assertEqual(self.text.text_size, 1)
+        self.assertEqual(self.text.thickness, 1)
+        self.text.text_size = 10
+        self.assertEqual(self.text.text_size, 10)
+        self.text.thickness = 2
+        self.assertEqual(self.text.thickness, 2)
+
+    def test_display_text(self):
+        pass
+        # , map_to_edit):
+        # text = self.text_content
+        # pos = self.position
+        # col = self.color
+        # font = self.font
+        # size = self.text_size
+        # thick = self.thickness
+        # style = self.font_style
+
+        # cv2.putText(map_to_edit, text, pos, font, size, col, thick, style)
 
 
 class TestMapClass(unittest.TestCase):
@@ -152,7 +180,6 @@ class TestPointClass(unittest.TestCase):
 
 
 class TestProjectionClassWithMargin(unittest.TestCase):
-    pass
     def setUp(self):
         shp_path = "./nyc_taxi_zones/taxi_zones.shp"
         self.sf = classfile.ShapeFile(shp_path)
@@ -178,14 +205,28 @@ class TestProjectionClassWithMargin(unittest.TestCase):
     def test_apply_projection(self):
         coords = (1, 1)
         new_coords = self.projection.apply_projection(coords, inverse=False)
-        self.assertEqual(new_coords[0], 0.006809740504131412)
-        self.assertEqual(new_coords[1], 0.006809740504131412)
+        self.assertEqual(new_coords[0], -6218.478717441366)
+        self.assertEqual(new_coords[1], -817.992030469674)
 
     def test_apply_projection_inverse(self):
-        coords = (0.006809740504131412, 0.006809740504131412)
-        new_coords = self.projection.apply_projection(coords, inverse=False)
+        coords = (-6218.478717441366, -817.992030469674)
+        new_coords = self.projection.apply_projection(coords, inverse=True)
+        self.assertEqual(new_coords[0], 1.0)
+        self.assertEqual(new_coords[1], 1.0)
+
+    def test_apply_translation_x_center(self):
+        self.projection.axis_to_center = 'x'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 405.94381314691896)
+        self.assertEqual(new_coords[1], 1049)
+
+    def test_apply_translation_y_center(self):
+        self.projection.axis_to_center = 'y'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
         self.assertEqual(new_coords[0], 1)
-        self.assertEqual(new_coords[1], 1)
+        self.assertEqual(new_coords[1], 1049)
 
     def tearDown(self):
         self.sf = None
@@ -220,28 +261,28 @@ class TestProjectionClassWithoutMargin(unittest.TestCase):
     def test_apply_projection(self):
         coords = [1, 1]
         new_coords = self.projection.apply_projection(coords, inverse=False)
-        self.assertEqual(new_coords[0], -6218.478717441366)
-        self.assertEqual(new_coords[1], -817.992030469674)
+        self.assertEqual(new_coords[0], -6457.650975804495)
+        self.assertEqual(new_coords[1],  -849.4532624108153)
 
     def test_apply_projection_inverse(self):
-        coords = [-6218.478717441366, -817.992030469674]
-        new_coords = self.projection.apply_projection(coords, inverse=False)
-        self.assertEqual(new_coords[0], 1)
-        self.assertEqual(new_coords[1], 1)
+        coords = [-6457.650975804495, -849.4532624108153]
+        new_coords = self.projection.apply_projection(coords, inverse=True)
+        self.assertEqual(new_coords[0], 1.0)
+        self.assertEqual(new_coords[1], 1.0)
 
     def test_apply_translation_x_center(self):
         self.projection.axis_to_center = 'x'
         coords = [1, 1]
         new_coords = self.projection.apply_translation(coords)
-        self.assertEqual(new_coords[0], 405.9438131469189)
-        self.assertEqual(new_coords[1], 1049)
+        self.assertEqual(new_coords[0], 415.7493444218005)
+        self.assertEqual(new_coords[1], 1079)
 
     def test_apply_translation_y_center(self):
         self.projection.axis_to_center = 'y'
         coords = [1, 1]
         new_coords = self.projection.apply_translation(coords)
         self.assertEqual(new_coords[0], 1)
-        self.assertEqual(new_coords[1], 1049)
+        self.assertEqual(new_coords[1], 1079)
 
     def tearDown(self):
         self.sf = None
@@ -277,34 +318,24 @@ class TestShapeClass(unittest.TestCase):
         self.assertEqual(min_bound, (931553.4909607167, 183788.04973023868))
 
     def test_project_shape_coords(self):
-        pass
+        base_map = classfile.Map(self.sf, [1920, 1080])
+        projection = classfile.Projection(base_map)
+        self.shape.project_shape_coords(projection)
+        self.assertEqual(self.shape.points[0], [555.6577658103997, 567.9118304283727])
+        self.assertEqual(self.shape.center, (575.6001758964726, 580.196262509733))
+        self.assertEqual(self.shape.max_bound, (617.2454355670657, 629.7749104709633))
+        self.assertEqual(self.shape.min_bound, (544.7148953223824, 534.5327405728962))
 
     def test_fill_in_shape(self):
         pass
-
-    def tearDown(self):
-        self.sf = None
-        self.shape = None
-
-    # def project_shape_coords(self, projection):
-
-    #     shape_zone = self.shapefile.shape(self.shape_id)
-    #     points = [projection.apply_projection([i[0], i[1]]) for i in shape_zone.points]
-    #     points = [projection.apply_translation([i[0], i[1]]) for i in points]
-    #     self.points = points
-
-    #     x_center, y_center = Utils.calculate_centroid(points)
-    #     self.center = (x_center, y_center)
-
-    #     max_bound, min_bound = Utils.calculate_boundaries(points)
-    #     self.max_bound = max_bound
-    #     self.min_bound = min_bound
 
     # def fill_in_shape(self, map_to_render):
     #     pts = np.array(self.points, np.int32)
     #     cv2.fillPoly(map_to_render, [pts], self.color_fill)
 
-
+    def tearDown(self):
+        self.sf = None
+        self.shape = None
 
 
 class TestShapefileClass(unittest.TestCase):
@@ -419,9 +450,7 @@ class TestShapefileClass(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-# mock, spies
 # import the libraries
-# find max coords
 # define projection
 # projection with margin
 # apply projection/translation
@@ -430,10 +459,9 @@ if __name__ == '__main__':
 # put text on map
 # fill in shape
 
-
-
 #Code changes - improvements
 # convert id should not go beyond 0
 # error message if points in boundaries and centroid are not lists of tuples
+# error message if points to render on map is not a list of coordinates (type POLYGON)
 # format of input for position interpolation
 
