@@ -1,25 +1,17 @@
 geo_rendering package - documentation
 =========================================
 
-a folder with the name of your package that contains:
-the Python code that makes up your package
-a README.md file
-an __init__.py
-license.txt
-setup.cfg
-setup.py file
-
-
 
 Purpose of this package
 -----------------------
 
 This package is designed to render maps from a **shapefile**.
 It allows you to:
-	- create an image file of any size with the shapefile map rendered on it
-	- convert the projection system to scale the shapefile map on the image_size
-	- draw points and fill shapes on the map
-	- add text on the map
+
+- create an image file of any size with the shapefile map rendered on it
+- convert the projection system to scale the shapefile map on the image_size
+- draw points and fill shapes on the map
+- add text on the map
 
 
 Requirements
@@ -28,6 +20,7 @@ Requirements
 The code is written in Python 3.7.
 
 There are several dependencies for this package. The versions provided here are those used for testing.
+
 - numpy 1.16.4
 - opencv-python 4.1.0
 - pandas 0.25.0
@@ -41,7 +34,9 @@ Installation
 
 To install the package:
 
-	$ pip install geo-rendering $ 
+```
+pip install geo-rendering
+```
 
 It relies in particular on two libraries: OpenCV and pyshp.
 
