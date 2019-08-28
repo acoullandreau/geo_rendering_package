@@ -13,6 +13,10 @@ class ContextualText:
         self.thickness = 1
 
     def display_text(self, map_to_edit):
+        """
+            Renders the text object on the provided image file, 
+            with all its attributes as parameters
+        """
         text = self.text_content
         pos = self.position
         col = self.color

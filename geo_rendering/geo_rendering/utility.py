@@ -4,7 +4,9 @@ class Utils:
 
     @staticmethod
     def calculate_centroid(points):
-
+        """
+            Computes the value of the center of a list of points
+        """
         x_sum = 0
         y_sum = 0
         for coords in points:
@@ -18,7 +20,10 @@ class Utils:
 
     @staticmethod
     def calculate_boundaries(points):
-
+        """
+            Returns the value of the max and min coordinates of the boundary
+            delimited by the points
+        """
         x_max = -99999999
         x_min = 99999999
         y_max = -99999999
@@ -41,7 +46,10 @@ class Utils:
 
     @staticmethod
     def convert_id(idx, inverse=False):
-
+        """
+            Converts an index from one range [1-x] to another [0-x],
+            or the inverse (if inverse=True)
+        """
         if inverse is False:
             idx = idx - 1
         else:

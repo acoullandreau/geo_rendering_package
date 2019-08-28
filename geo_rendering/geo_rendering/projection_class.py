@@ -10,7 +10,11 @@ class Projection:
         self.axis_to_center = self.define_projection()[1]
 
     def define_projection(self):
-
+        """
+            Calculates the conversion rate and axis on which to center the 
+            converted coordinates
+        """
+        
         # We get the max 'coordinates' for both the target image and
         # the shape we want to draw
         image_x_max = self.image_size[0] - self.margin[1]
@@ -39,7 +43,11 @@ class Projection:
         return conversion, axis_to_center
 
     def apply_projection(self, coords, inverse=False):
-
+        """
+            applies the conversion on coordinates ;
+            the inverse argument allows to go from one coordinate system
+            (the original one), to the new one
+        """
         x = coords[0]
         y = coords[1]
         x_min = self.map_min_bound[0]
@@ -58,7 +66,9 @@ class Projection:
         return coords
 
     def apply_translation(self, coords):
-
+        """
+            Translates the coordinates along the axis to center in order to center the map
+        """
         axis_to_center = self.axis_to_center
         image_x_max = self.image_size[0] - self.margin[1]
         image_y_max = self.image_size[1] - self.margin[2]

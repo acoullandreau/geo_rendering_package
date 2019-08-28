@@ -20,6 +20,12 @@ class Map:
         self.background_color = background_color  # Default black background
 
     def build_shape_dict(self, ref_df):
+        """
+            Constructs the shape_dict using the id of each shape from the
+            shapefile and instantiating instances of the Shape class for each
+            of them
+            It uses the dataframe extracted from the shapefile as an argument
+        """
         index_list = ref_df.index.tolist()
         shape_dict = {}
         for shape_id in index_list:
@@ -29,7 +35,9 @@ class Map:
         return shape_dict
 
     def find_max_coords(self):
-
+        """
+            Computes the max_bound and min_bound of the shapefile
+        """
         all_max_bound = []
         all_min_bound = []
         shape_dict = self.shape_dict
@@ -46,7 +54,10 @@ class Map:
         return (map_max_bound, map_min_bound)
 
     def render_map(self):
-
+        """
+            Generates an image file with a size of image_size and plots 
+            each shape of the shape_dict_filt
+        """
         # first we create a blank image, on which we will draw the base map
         width = self.image_size[0]
         height = self.image_size[1]

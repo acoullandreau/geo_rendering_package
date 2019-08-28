@@ -17,6 +17,10 @@ class ContextualText:
         self.thickness = 1
 
     def display_text(self, map_to_edit):
+        """
+            Renders the text object on the provided image file, 
+            with all its attributes as parameters
+        """
         text = self.text_content
         pos = self.position
         col = self.color
@@ -43,6 +47,12 @@ class Map:
         self.background_color = background_color  # Default black background
 
     def build_shape_dict(self, ref_df):
+        """
+            Constructs the shape_dict using the id of each shape from the
+            shapefile and instantiating instances of the Shape class for each
+            of them
+            It uses the dataframe extracted from the shapefile as an argument
+        """
         index_list = ref_df.index.tolist()
         shape_dict = {}
         for shape_id in index_list:
@@ -52,7 +62,9 @@ class Map:
         return shape_dict
 
     def find_max_coords(self):
-
+        """
+            Computes the max_bound and min_bound of the shapefile
+        """
         all_max_bound = []
         all_min_bound = []
         shape_dict = self.shape_dict
@@ -69,7 +81,10 @@ class Map:
         return (map_max_bound, map_min_bound)
 
     def render_map(self):
-
+        """
+            Generates an image file with a size of image_size and plots 
+            each shape of the shape_dict_filt
+        """
         # first we create a blank image, on which we will draw the base map
         width = self.image_size[0]
         height = self.image_size[1]
@@ -99,11 +114,19 @@ class PointOnMap:
         self.color = color
 
     def render_point_on_map(self, base_map):
+        """
+            Renders the point on the map file provided as an argument
+        """
         x = int(self.x_coord_curr)
         y = int(self.y_coord_curr)
         cv2.circle(base_map, (x, y), self.weight, self.color, -1)
 
     def interpolate_next_position(self, target_coords, tot_frames, curr_frame):
+        """
+            Interpolates the position of a point, knowing where we want it to
+            arrive, in how many 'hops'
+            Especially used when rendering multiple frames for an animation
+        """
         # as to perform the arithmetic operations, we convert everything to
         # float for more precision
         x_origin = float(self.x_coord_or)
@@ -133,7 +156,10 @@ class Projection:
         self.axis_to_center = self.define_projection()[1]
 
     def define_projection(self):
-
+        """
+            Calculates the conversion rate and axis on which to center the 
+            converted coordinates
+        """
         # We get the max 'coordinates' for both the target image and
         # the shape we want to draw
         image_x_max = self.image_size[0] - self.margin[1]
@@ -162,6 +188,11 @@ class Projection:
         return conversion, axis_to_center
 
     def apply_projection(self, coords, inverse=False):
+        """
+            applies the conversion on coordinates ;
+            the inverse argument allows to go from one coordinate system
+            (the original one), to the new one
+        """
 
         x = coords[0]
         y = coords[1]
@@ -181,6 +212,9 @@ class Projection:
         return coords
 
     def apply_translation(self, coords):
+        """
+            Translates the coordinates along the axis to center in order to center the map
+        """
 
         axis_to_center = self.axis_to_center
         image_x_max = self.image_size[0] - self.margin[1]
@@ -226,10 +260,17 @@ class ShapeFile:
         self.shape_dict_sf = self.build_shape_dict(self.df_sf)
 
     def sf_reader(self, path):
+        """
+            Creates a reader object from the shapefile folder (path)
+        """
         shapefile = shp.Reader(self.path)
         return shapefile
 
     def shp_to_df(self):
+        """
+            Converts the shapefile reader to a dataframe
+        """
+
         sf = self.shapefile
         fields = [x[0] for x in sf.fields][1:]
         records = sf.records()
@@ -239,6 +280,13 @@ class ShapeFile:
         return df
 
     def filter_shape_to_render(self, cond_stat, attr):
+        """
+            filters out the dataframe using a particular column (attr) and a
+            condition statement (cond_stat)
+            cond_stat can be either a single string or a list of strings to
+            match in the provide attr column
+        """
+
         # cond_stat in the form of a string or an array
         # attr in the form of a str, a column name of df
 
@@ -257,6 +305,11 @@ class ShapeFile:
             return filtered_df
 
     def build_shape_dict(self, ref_df):
+        """
+            Constructs the dictionary using the id of each shape from the
+            shapefile and instantiating instances of the Shape class for each
+            of them ; it uses the dataframe extracted from the shapefile
+        """
         index_list = ref_df.index.tolist()
         shape_dict = {}
         for shape_id in index_list:
@@ -280,7 +333,10 @@ class ShapeOnMap:
         self.color_fill = (0, 0, 0)  # Default black fill
 
     def get_shape_coords(self):
-
+        """
+            Calculates the points, center, max_bound / min_bound coordinates 
+            using the shapefile reader 'shape' attribute
+        """
         shape_zone = self.shapefile.shape(self.shape_id)
         points = [(i[0], i[1]) for i in shape_zone.points]
         x_center, y_center = Utils.calculate_centroid(points)
@@ -290,6 +346,11 @@ class ShapeOnMap:
         return (points, center, max_bound, min_bound)
 
     def project_shape_coords(self, projection):
+        """
+            Converts the coordinates of the shape using a given projection
+            (conversion, axis_to_center), relying on the two projection methods
+            apply_projection() and apply_translation()
+        """
 
         shape_zone = self.shapefile.shape(self.shape_id)
         points = [projection.apply_projection([i[0], i[1]]) for i in shape_zone.points]
@@ -304,5 +365,8 @@ class ShapeOnMap:
         self.min_bound = min_bound
 
     def fill_in_shape(self, map_to_render):
+        """
+            Renders the shape on the map file provided as an argument
+        """
         pts = np.array(self.points, np.int32)
         cv2.fillPoly(map_to_render, [pts], self.color_fill)
