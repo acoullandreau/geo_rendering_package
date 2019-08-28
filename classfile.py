@@ -175,8 +175,8 @@ class Projection:
             x = (x - x_min) * self.conversion
             y = (y - y_min) * self.conversion
         else:
-            x = (x + x_min) / self.conversion
-            y = (y + y_min) / self.conversion
+            x = x / self.conversion + x_min
+            y = y / self.conversion + y_min
 
         coords = [x, y]
         return coords
