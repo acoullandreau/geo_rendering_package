@@ -500,19 +500,19 @@ class TestShapefileClass(unittest.TestCase):
         """
         Test the proper filtering of a dataframe when the condition statement is invalid
         """
-        cond_stat = 'unexisting_value'
+        cond_stat = 1  # wrong type of argument
         attr = 'zone'
-        #df_filtered = self.sf.filter_shape_to_render(cond_stat, attr)
-        pass
+        with self.assertRaises(AttributeError): 
+            self.sf.filter_shape_to_render(cond_stat, attr)
 
     def test_filter_shape_to_render_error_attr(self):
         """
         Test the proper filtering of a dataframe when the attribute statement is invalid
         """
         cond_stat = 'Alphabet City'
-        attr = 'name'
-        #df_filtered = self.sf.filter_shape_to_render(cond_stat, attr)
-        pass
+        attr = 'name' # wrong argument value
+        with self.assertRaises(KeyError): 
+            self.sf.filter_shape_to_render(cond_stat, attr)
 
     @classmethod
     def tearDownClass(self):
