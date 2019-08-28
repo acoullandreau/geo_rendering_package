@@ -210,13 +210,14 @@ class TestPointClass(unittest.TestCase):
 
 class TestProjectionClassWithMargin(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         shp_path = "./nyc_taxi_zones/taxi_zones.shp"
         self.sf = classfile.ShapeFile(shp_path)
         self.base_map = classfile.Map(self.sf, [1920, 1080])
         self.projection = classfile.Projection(self.base_map, [10, 20, 30, 40])
 
-    def test_init_projection(self):
+    def test_0_init_projection(self):
         """
         Test the proper instanciation of the Projection Class with margins
         """
@@ -275,7 +276,8 @@ class TestProjectionClassWithMargin(unittest.TestCase):
         self.assertEqual(new_coords[0], 1)
         self.assertEqual(new_coords[1], 1049)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         self.sf = None
         self.base_map = None
         self.projection = None
@@ -283,13 +285,14 @@ class TestProjectionClassWithMargin(unittest.TestCase):
 
 class TestProjectionClassWithoutMargin(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         shp_path = "./nyc_taxi_zones/taxi_zones.shp"
         self.sf = classfile.ShapeFile(shp_path)
         self.base_map = classfile.Map(self.sf, [1920, 1080])
         self.projection = classfile.Projection(self.base_map)
 
-    def test_init_projection(self):
+    def test_0_init_projection(self):
         """
         Test the proper instanciation of the Projection Class without margins
         """
@@ -348,7 +351,8 @@ class TestProjectionClassWithoutMargin(unittest.TestCase):
         self.assertEqual(new_coords[0], 1)
         self.assertEqual(new_coords[1], 1079)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         self.sf = None
         self.base_map = None
         self.projection = None
@@ -361,6 +365,8 @@ class TestShapeClass(unittest.TestCase):
         shp_path = "./nyc_taxi_zones/taxi_zones.shp"
         self.sf = classfile.ShapeFile(shp_path)
         self.shape = classfile.ShapeOnMap(self.sf.shapefile, 0)
+        self.cv2_original = cv2.fillPoly
+        cv2.fillPoly = MagicMock()
 
     def test_init_shape(self):
         """
@@ -406,16 +412,19 @@ class TestShapeClass(unittest.TestCase):
         """
         Test the proper modification of an image file with the filling of a given shape
         """
-        pass
-
-    # def fill_in_shape(self, map_to_render):
-    #     pts = np.array(self.points, np.int32)
-    #     cv2.fillPoly(map_to_render, [pts], self.color_fill)
+        map_to_render = 'Test Map'
+        self.shape.fill_in_shape(map_to_render)
+        # assertion statement
+        cv2.fillPoly.assert_called_once()
+        self.assertEqual(cv2.fillPoly.call_args[0][0], 'Test Map')
+        self.assertEqual(type(cv2.fillPoly.call_args[0][1]), list)
+        self.assertEqual(cv2.fillPoly.call_args[0][2], self.shape.color_fill)
 
     @classmethod
     def tearDownClass(self):
         self.sf = None
         self.shape = None
+        cv2.fillPoly = self.cv2_original
 
 
 class TestShapefileClass(unittest.TestCase):
