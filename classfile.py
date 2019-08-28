@@ -5,7 +5,6 @@ import shapefile as shp
 
 from utility import Utils
 
-
 class ContextualText:
 
     def __init__(self, content, position, color):
