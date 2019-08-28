@@ -519,38 +519,5 @@ class TestShapefileClass(unittest.TestCase):
         self.sf = None
 
 
-    # def filter_shape_to_render(self, cond_stat, attr):
-    #     # cond_stat in the form of a string or an array
-    #     # attr in the form of a str, a column name of df
-    #     try:
-    #         if type(cond_stat) == str:
-    #             filtered_df = self.df_sf[self.df_sf[attr] == cond_stat]
-    #         elif type(cond_stat) == list:
-    #             filtered_df = self.df_sf[self.df_sf[attr].isin(cond_stat)]
-
-    #         return filtered_df
-    #     except:
-             # print("""Error parsing condition statement or attribute
-             #        Condition statement must be str or arr of values in the shapefile_dataframe
-             #        Attribute must be a column name of the shapefile_dataframe
-             #        See ShapeFile().df_sf for more details
-             #        """)
-    
-
-
-
 if __name__ == '__main__':
     unittest.main()
-
-# import the libraries
-# render a map from a shapefile (call the right method with the right parameters)
-# draw a point on map
-# put text on map
-# fill in shape
-
-#Code changes - improvements
-# convert id should not go beyond 0
-# error message if points in boundaries and centroid are not lists of tuples
-# error message if points to render on map is not a list of coordinates (type POLYGON)
-# format of input for position interpolation
-
