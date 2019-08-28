@@ -241,18 +241,20 @@ class ShapeFile:
     def filter_shape_to_render(self, cond_stat, attr):
         # cond_stat in the form of a string or an array
         # attr in the form of a str, a column name of df
+
         try:
             if type(cond_stat) == str:
                 filtered_df = self.df_sf[self.df_sf[attr] == cond_stat]
             elif type(cond_stat) == list:
                 filtered_df = self.df_sf[self.df_sf[attr].isin(cond_stat)]
+            else:
+                raise AttributeError('Condition statement must be str or arr of values from the shapefile_dataframe')
 
-            return filtered_df
         except:
-            print("Error parsing condition statement or attribute")
-            print("Condition statement must be str or arr of values in the shapefile_dataframe")
-            print("Attribute must be a column name of the shapefile_dataframe")
-            print("See ShapeFile().df_sf for more details")
+            raise
+
+        else:
+            return filtered_df
 
     def build_shape_dict(self, ref_df):
         index_list = ref_df.index.tolist()
