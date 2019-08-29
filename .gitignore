@@ -4,4 +4,4 @@ shapefile
 .idea
 *pycache*
 *.egg*
-*site-package*
+*site-packages*
