@@ -35,7 +35,7 @@ Installation
 To install the package:
 
 ```
-pip install geo_rendering
+pip install geo-rendering
 ```
 
 It relies in particular on two libraries: OpenCV and pyshp.
@@ -54,16 +54,21 @@ Package functions
 -----------------
 
 **ContextualText** is the class responsible for text rendering. 
-An instance is created provided three arguments:
-- content: the text to display
-- position: the coordinates (in pixels) of the bottom left point of the text - 
-- color: as a tuple of BGR color
+An instance is created provided three arguments: 
+```
+geo_rendering.ContextualText(content, position, color)
+```
 
-Other attributes are set by default but can be edited at any time:
-- font (default cv2.FONT_HERSHEY_SIMPLEX)
-- font_style (default cv2.LINE_AA)
-- text_size (default 1)
-- thickness (default 1)
+These arguments are used to instantiate properties of the instance:
+- .content: the text to display
+- .position: the coordinates (in pixels) of the bottom left point of the text - 
+- .color: as a tuple of BGR color
+
+Other properties are set by default but can be edited at any time:
+- .font (default cv2.FONT_HERSHEY_SIMPLEX)
+- .font_style (default cv2.LINE_AA)
+- .text_size (default 1)
+- .thickness (default 1)
 
 Only one method is available: 
 - display_text(map_to_edit), that renders the text on the map file provided as an argument
@@ -75,16 +80,21 @@ See [OpenCV ](https://docs.opencv.org/3.0-beta/modules/imgproc/doc/drawing_funct
 **Map** is the class responsible for the rendering of a map provided a shapefile. 
 
 An instance is created provided three arguments:
-- shapefile: a Shapefile class instance
-- image_size: the image size (width, height) in pixels
-- background_color[optional]: the color of the background image (default black)
+```
+geo_rendering.Map(shapefile, image_size, [background_color])
+```
 
-Other attributes are set by default but can be edited at any time:
-- shape_dict: a dictionary of all shapes in the shapefile (key is the index of the shape, value a instance of the Shape class)
-- shape_dict_filt: equivalent to the shape_dict unless part of the shapefile is to be rendered (filter)
-- max_bound / min_bound: the extreme coordinates of the boundaries of the shapefile
-- projection (default {})
-- map_file: the image file
+These arguments are used to instantiate properties of the instance:
+- .shapefile: a Shapefile class instance
+- .image_size: the image size (width, height) in pixels
+- .background_color[optional]: the color of the background image (default black)
+
+Other properties are set by default but can be edited at any time:
+- .shape_dict: a dictionary of all shapes in the shapefile (key is the index of the shape, value a instance of the Shape class)
+- .shape_dict_filt: equivalent to the shape_dict unless part of the shapefile is to be rendered (filter)
+- .max_bound / .min_bound: the extreme coordinates of the boundaries of the shapefile
+- .projection (default {})
+- .map_file: the image file
 
 Three methods are available: 
 - build_shape_dict(ref_df): constructs the dictionary using the id of each shape from the shapefile and instantiating instances of the Shape class for each of them ; it uses the dataframe extracted from the shapefile (see below)
@@ -98,13 +108,18 @@ See [OpenCV ](https://docs.opencv.org/3.0-beta/modules/imgproc/doc/drawing_funct
 **PointOnMap** is the class responsible for point rendering. 
 
 An instance is created provided three arguments:
-- coordinates: the coordinates (in pixels) of the center of the point
-- weight: the size of the point to render
-- color: as a tuple of BGR color
+```
+geo_rendering.PointOnMap(coordinates, weight, color)
+```
 
-Other attributes are set by default but can be edited at any time:
-- origin coordinates (x_coord_or/y_coord_or)
-- current coordinates (x_coord_curr/y_coord_curr): by default the same as the origin coordinates, unless the point should have an position interpolated using the dedicated method
+These arguments are used to instantiate properties of the instance:
+- .coordinates: the coordinates (in pixels) of the center of the point
+- .weight: the size of the point to render
+- .color: as a tuple of BGR color
+
+Other properties are set by default but can be edited at any time:
+- .origin coordinates (x_coord_or/y_coord_or)
+- .current coordinates (x_coord_curr/y_coord_curr): by default the same as the origin coordinates, unless the point should have an position interpolated using the dedicated method
 
 Two methods are available: 
 - render_point_on_map(base_map), that renders the point on the map file provided as an argument
@@ -116,16 +131,21 @@ See [OpenCV ](https://docs.opencv.org/3.0-beta/modules/imgproc/doc/drawing_funct
 
 **Projection** is the class responsible for calculating the conversion ratio and axis to use to center the map, from the coordinate system of the shapefile to the new coordinate system of the image file.
 
-An instance is created provided two arguments:
-- map_to_scale: the Map class instance object that we want to render
-- margins [optional]: margins to add to (top, right, bottom, left) of the image file in pixels
+An instance is created provided three arguments:
+```
+geo_rendering.Projection(map_to_scale, [margin])
+```
+
+These arguments are used to instantiate properties of the instance:
+- .map_to_scale: the Map class instance object that we want to render
+- .margins [optional]: margins to add to (top, right, bottom, left) of the image file in pixels
 
 
-Other attributes are set by default but can be edited at any time:
-- image_size, an attribute of the map_to_scale
-- map_max_bound / map_min_bound: an attribute of the map_to_scale
-- conversion: calculated using define_projection method
-- axis_to_center: calculated using define_projection method
+Other properties are set by default but can be edited at any time:
+- .image_size, an attribute of the map_to_scale
+- .map_max_bound / .map_min_bound: an attribute of the map_to_scale
+- .conversion: calculated using define_projection method
+- .axis_to_center: calculated using define_projection method
 
 Three methods are available: 
 - define_projection(): calculates the conversion rate and axis on which to center the converted coordinates
@@ -137,13 +157,18 @@ Three methods are available:
 
 **ShapeFile** is the class responsible for converting a shapefile into a reader object and a dataframe.
 
-An instance is created provided one single argument:
-- shp_path, the path of the shapefile folder ; note that this folder should contain at least a .shp, .dbf and .shx in the same folder
+An instance is created provided three arguments:
+```
+geo_rendering.ShapeFile(file_path)
+```
 
-Other attributes are set by default but can be edited at any time:
-- shapefile, the shapefile reader object
-- df_sf the information of the shapefile in the form of a dataframe
-- shape_dict_sf: a dictionary of all shapes in the shapefile (key is the index of the shape, value a instance of the Shape class)
+These arguments are used to instantiate properties of the instance:
+- .shp_path, the path of the shapefile folder ; note that this folder should contain at least a .shp, .dbf and .shx in the same folder
+
+Other properties are set by default but can be edited at any time:
+- .shapefile, the shapefile reader object
+- .df_sf the information of the shapefile in the form of a dataframe
+- .shape_dict_sf: a dictionary of all shapes in the shapefile (key is the index of the shape, value a instance of the Shape class)
 
 Four methods are available: 
 - sf_reader(path): creates a reader object from the shapefile folder
@@ -159,16 +184,21 @@ See [PySHP](https://pypi.org/project/pyshp/) requirements for more details.
 **ShapeOnMap** is the class responsible for shape rendering. 
 
 An instance is created provided three arguments:
-- shapefile: a Shapefile class instance
-- shape_id: the id of the shape (can be assigned arbitrarily, but it is intended to be the same that the one used in the shapefile dataframe)
+```
+geo_rendering.ShapeOnMap(shapefile, shape_id)
+```
 
-Other attributes are set by default but can be edited at any time:
-- points: the coordinates of the boundaries of the shape
-- center: the center coordinates of the shape
-- max_bound / min_bound: the extreme coordinates of the boundaries of the shape
-- color_line (default white)
-- line_thick (default 1)
-- color_fill (default black)
+These arguments are used to instantiate properties of the instance:
+- .shapefile: a Shapefile class instance
+- .shape_id: the id of the shape (can be assigned arbitrarily, but it is intended to be the same that the one used in the shapefile dataframe)
+
+Other properties are set by default but can be edited at any time:
+- .points: the coordinates of the boundaries of the shape
+- .center: the center coordinates of the shape
+- .max_bound / .min_bound: the extreme coordinates of the boundaries of the shape
+- .color_line (default white)
+- .line_thick (default 1)
+- .color_fill (default black)
 
 Three methods are available: 
 - get_shape_coords(): calculates the points, center, max_bound / min_bound coordinates using the shapefile reader 'shape' attribute
@@ -199,6 +229,12 @@ There is a total of 37 tests available, that should cover most of the classes an
 | ------------ | ----- | ---- | ----- | --------------- |
 | classfile.py | 214   |  10  |  95%  | 20-28, 155-156  |
 | utility.py   | 33    |   0  |  100% |                 |
+
+Note: tests can be executed using the following command from the geo_rendering main directory (where the setup.py file is stored!)
+
+```
+python setup.py test
+```
 
 
 Further work and improvements
