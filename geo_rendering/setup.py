@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="geo_rendering",
-    version="1.0.0",
+    version="1.1.0",
     description="Rendering of images from a shapefile using OpenCV",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
