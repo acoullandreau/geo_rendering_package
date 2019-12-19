@@ -219,7 +219,7 @@ class TestProjectionClassWithMargin(unittest.TestCase):
         shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
         self.sf = ShapeFile(shp_path)
         self.base_map = Map(self.sf, [1920, 1080])
-        self.projection = Projection(self.base_map, [10, 20, 30, 40])
+        self.projection = Projection(self.base_map, margin=[10, 20, 30, 40])
 
     def test_0_init_projection(self):
         """
