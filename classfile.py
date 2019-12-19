@@ -147,11 +147,12 @@ class PointOnMap:
 
 class Projection:
 
-    def __init__(self, map_to_scale, margin=[0, 0, 0, 0]):
+    def __init__(self, map_to_scale, scale_param=[1, 1], margin=[0, 0, 0, 0]):
         self.image_size = map_to_scale.image_size
         self.map_max_bound = map_to_scale.max_bound
         self.map_min_bound = map_to_scale.min_bound
         self.margin = margin  # (top, right, bottom, left) in pixels
+        self.scale_param = scale_param  # x and y scaling parameters
         self.conversion = self.define_projection()[0]
         self.axis_to_center = self.define_projection()[1]
 
@@ -202,11 +203,11 @@ class Projection:
         if inverse is False:
             # to be able to center the image, we first translate the
             # coordinates to the origin
-            x = (x - x_min) * self.conversion
-            y = (y - y_min) * self.conversion
+            x = (x - x_min) * self.conversion * self.scale_param[0]
+            y = (y - y_min) * self.conversion * self.scale_param[1]
         else:
-            x = x / self.conversion + x_min
-            y = y / self.conversion + y_min
+            x = x / (self.conversion * self.scale_param[0]) + x_min
+            y = y / (self.conversion * self.scale_param[1]) + y_min
 
         coords = [x, y]
         return coords

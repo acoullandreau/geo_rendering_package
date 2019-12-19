@@ -362,6 +362,158 @@ class TestProjectionClassWithoutMargin(unittest.TestCase):
         self.projection = None
 
 
+class TestProjectionClassWithScaleAndMargin(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
+        self.sf = ShapeFile(shp_path)
+        self.base_map = Map(self.sf, [1920, 1080])
+        self.projection = Projection(self.base_map, scale_param=[0.5, 0.75], margin=[10, 20, 30, 40])
+
+    def test_0_init_projection(self):
+        """
+        Test the proper instanciation of the Projection Class with margins
+        """
+        self.assertEqual(self.projection.image_size, [1920, 1080])
+        self.assertEqual(self.projection.map_max_bound, (1067382.508405164, 272844.2940054685))
+        self.assertEqual(self.projection.map_min_bound, (913175.109008804, 120121.88125434518))
+        self.assertEqual(self.projection.margin, [10, 20, 30, 40])
+        self.assertEqual(self.projection.scale_param, [0.5, 0.75])
+        self.assertEqual(self.projection.conversion, 0.006809740504131412)
+        self.assertEqual(self.projection.axis_to_center, 'x')
+
+    def test_define_projection(self):
+        """
+        Test the proper calculation of a projection conversion rate and axis to center on
+        """
+        conversion, axis_to_center = self.projection.define_projection()
+        self.assertEqual(conversion, 0.006809740504131412)
+        self.assertEqual(axis_to_center, 'x')
+
+    def test_apply_projection(self):
+        """
+        Test the proper conversion of coordinates to a new projection system
+        By opposition to the test test_apply_projection_inverse
+        """
+        coords = (1, 1)
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], -3109.239358720683)
+        self.assertEqual(new_coords[1], -613.4940228522555)
+
+    def test_apply_projection_inverse(self):
+        """
+        Test the proper conversion of coordinates to a "previous" projection system
+        By opposition to the test test_apply_projection
+        """
+        coords = (-3109.239358720683, -613.4940228522555)
+        new_coords = self.projection.apply_projection(coords, inverse=True)
+        self.assertEqual(new_coords[0], 1.0)
+        self.assertEqual(new_coords[1], 1.0)
+
+    def test_apply_translation_x_center(self):
+        """
+        Test the proper translation of coordinates on the x-axis
+        """
+        self.projection.axis_to_center = 'x'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 668.4719065734595)
+        self.assertEqual(new_coords[1], 1049)
+
+    def test_apply_translation_y_center(self):
+        """
+        Test the proper translation of coordinates on the y-axis
+        """
+        self.projection.axis_to_center = 'y'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 1)
+        self.assertEqual(new_coords[1], 919)
+
+    @classmethod
+    def tearDownClass(self):
+        self.sf = None
+        self.base_map = None
+        self.projection = None
+
+
+class TestProjectionClassWithScaleWithoutMargin(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        shp_path = "geo_rendering/tests/nyc_taxi_zones/taxi_zones.shp"
+        self.sf = ShapeFile(shp_path)
+        self.base_map = Map(self.sf, [1920, 1080])
+        self.projection = Projection(self.base_map, scale_param=[0.5, 0.75])
+
+    def test_0_init_projection(self):
+        """
+        Test the proper instanciation of the Projection Class without margins
+        """
+        self.assertEqual(self.projection.image_size, [1920, 1080])
+        self.assertEqual(self.projection.map_max_bound, (1067382.508405164, 272844.2940054685))
+        self.assertEqual(self.projection.map_min_bound, (913175.109008804, 120121.88125434518))
+        self.assertEqual(self.projection.margin, [0, 0, 0, 0])
+        self.assertEqual(self.projection.scale_param, [0.5, 0.75])
+        self.assertEqual(self.projection.conversion, 0.007071653600444159)
+        self.assertEqual(self.projection.axis_to_center, 'x')
+
+    def test_define_projection(self):
+        """
+        Test the proper calculation of a projection conversion rate and axis to center on
+        """
+        conversion, axis_to_center = self.projection.define_projection()
+        self.assertEqual(conversion, 0.007071653600444159)
+        self.assertEqual(axis_to_center, 'x')
+
+    def test_apply_projection(self):
+        """
+        Test the proper conversion of coordinates to a new projection system
+        By opposition to the test test_apply_projection_inverse
+        """
+        coords = (1, 1)
+        new_coords = self.projection.apply_projection(coords, inverse=False)
+        self.assertEqual(new_coords[0], -3228.8254879022475)
+        self.assertEqual(new_coords[1], -637.0899468081116)
+
+    def test_apply_projection_inverse(self):
+        """
+        Test the proper conversion of coordinates to a "previous" projection system
+        By opposition to the test test_apply_projection
+        """
+        coords = (-3228.8254879022475, -637.0899468081116)
+        new_coords = self.projection.apply_projection(coords, inverse=True)
+        self.assertEqual(new_coords[0], 1.0)
+        self.assertEqual(new_coords[1], 1.0)
+
+    def test_apply_translation_x_center(self):
+        """
+        Test the proper translation of coordinates on the x-axis
+        """
+        self.projection.axis_to_center = 'x'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 688.3746722109003)
+        self.assertEqual(new_coords[1], 1079)
+
+    def test_apply_translation_y_center(self):
+        """
+        Test the proper translation of coordinates on the y-axis
+        """
+        self.projection.axis_to_center = 'y'
+        coords = [1, 1]
+        new_coords = self.projection.apply_translation(coords)
+        self.assertEqual(new_coords[0], 1)
+        self.assertEqual(new_coords[1], 944.0)
+
+    @classmethod
+    def tearDownClass(self):
+        self.sf = None
+        self.base_map = None
+        self.projection = None
+
+        
 class TestShapeClass(unittest.TestCase):
 
     @classmethod
