@@ -20,7 +20,7 @@ setup(
         "Topic :: Scientific/Engineering :: Visualization"
     ],
     packages=['geo_rendering', 'geo_rendering.tests'],
-    install_requires=["mock==3.0.5", "numpy==1.17.0", "pandas==0.25.1", "pyshp==2.1.0", "opencv-python==4.2.0.32"],
+    install_requires=["mock==3.0.5", "numpy==1.22.0", "pandas==0.25.1", "pyshp==2.1.0", "opencv-python==4.2.0.32"],
     include_package_data=True,
     test_suite='nose.collector',
     tests_require=['nose'],
